@@ -1,11 +1,38 @@
-#  Aldarion
-apt-get update && apt-get install -y isc-dhcp-server
+# ==========================================================
+# == Script Gabungan Setup DHCP (Server, Relay, Client)   ==
+# ==                                                      ==
+# == Script ini mendeteksi hostname dan menjalankan:      ==
+# == 1. 'Aldarion': Setup isc-dhcp-server                 ==
+# == 2. 'Durin': Setup isc-dhcp-relay                     ==
+# == 3. 'Gilgalad', 'Amandil', 'Khamul': Setup DHCP Client==
+# ==========================================================
 
-# Konfigurasi interface - hanya IPv4, disable IPv6
-echo 'INTERFACESv4="eth0"' > /etc/default/isc-dhcp-server
-echo 'INTERFACESv6=""' >> /etc/default/isc-dhcp-server
+# Ambil nama host saat ini
+CURRENT_HOST=$(hostname)
 
-cat > /etc/dhcp/dhcpd.conf << EOF
+echo "--- Menjalankan script setup DHCP di $CURRENT_HOST ---"
+
+# Mulai logika berdasarkan nama host
+case $CURRENT_HOST in
+
+    # =================================================
+    # === KASUS 1: NODE DHCP SERVER (ALDARION)      ===
+    # =================================================
+    "Aldarion")
+        echo "Node: Aldarion (DHCP Server)"
+        
+        # 1. Install server
+        apt-get update && apt-get install -y isc-dhcp-server
+
+        # 2. Konfigurasi interface (hanya listen di eth0 IPv4)
+        echo "Mengkonfigurasi /etc/default/isc-dhcp-server..."
+        echo 'INTERFACESv4="eth0"' > /etc/default/isc-dhcp-server
+        echo 'INTERFACESv6=""' >> /etc/default/isc-dhcp-server
+
+        # 3. Buat file konfigurasi dhcpd.conf
+        echo "Membuat /etc/dhcp/dhcpd.conf..."
+        # 'EOF' dibungkus petik agar $ tidak diekspansi shell
+        cat << 'EOF' > /etc/dhcp/dhcpd.conf
 # Manusia
 subnet 192.219.1.0 netmask 255.255.255.0 {
     range 192.219.1.6 192.219.1.34;
@@ -28,14 +55,14 @@ subnet 192.219.2.0 netmask 255.255.255.0 {
     max-lease-time 3600;      # 1 jam
 }
 
-# Fixed Address
+# Fixed Address (Subnet 3)
 subnet 192.219.3.0 netmask 255.255.255.0 {
     option routers 192.219.3.1;
     option broadcast-address 192.219.3.255;
     option domain-name-servers 192.219.3.3;
 }
 
-# Aldarion
+# Subnet 4 (Aldarion's network)
 subnet 192.219.4.0 netmask 255.255.255.0 {
     option routers 192.219.4.1;
     option broadcast-address 192.219.4.255;
@@ -49,89 +76,87 @@ host Khamul {
 }
 EOF
 
-service isc-dhcp-server restart
+        # 4. Restart service
+        echo "Me-restart isc-dhcp-server..."
+        service isc-dhcp-server restart
+        
+        echo "--- Setup Aldarion Selesai ---"
+        echo "Verifikasi:"
+        echo "service isc-dhcp-server status"
+        echo "cat /var/lib/dhcp/dhcpd.leases"
+        ;;
 
-#  Durin
-apt-get update && apt-get install -y isc-dhcp-relay
+    # =================================================
+    # === KASUS 2: NODE DHCP RELAY (DURIN)          ===
+    # =================================================
+    "Durin")
+        echo "Node: Durin (DHCP Relay)"
+        
+        # 1. Install relay
+        apt-get update && apt-get install -y isc-dhcp-relay
 
-echo 'SERVERS="192.219.4.2"' > /etc/default/isc-dhcp-relay
-echo 'INTERFACES="eth1 eth2 eth3 eth4"' >> /etc/default/isc-dhcp-relay
-echo 'OPTIONS=""' >> /etc/default/isc-dhcp-relay
+        # 2. Konfigurasi relay
+        echo "Mengkonfigurasi /etc/default/isc-dhcp-relay..."
+        # SERVERS = Alamat DHCP Server (Aldarion)
+        echo 'SERVERS="192.219.4.2"' > /etc/default/isc-dhcp-relay
+        # INTERFACES = Interface mana saja yg di-relay
+        echo 'INTERFACES="eth1 eth2 eth3 eth4"' >> /etc/default/isc-dhcp-relay
+        echo 'OPTIONS=""' >> /etc/default/isc-dhcp-relay
 
-echo 'net.ipv4.ip_forward=1' > /etc/sysctl.conf
-sysctl -p
+        # 3. Aktifkan IP Forwarding (Wajib untuk relay/router)
+        echo "Mengaktifkan IP Forwarding..."
+        echo 'net.ipv4.ip_forward=1' > /etc/sysctl.conf
+        sysctl -p
 
-service isc-dhcp-relay restart
+        # 4. Restart service
+        echo "Me-restart isc-dhcp-relay..."
+        service isc-dhcp-relay restart
 
-# testing
+        echo "--- Setup Durin Selesai ---"
+        echo "Verifikasi:"
+        echo "service isc-dhcp-relay status"
+        echo "cat /proc/sys/net/ipv4/ip_forward (harus '1')"
+        ;;
 
-#  Aldarion
-service isc-dhcp-server status
-cat /etc/dhcp/dhcpd.conf
-cat /etc/default/isc-dhcp-server
-cat /var/lib/dhcp/dhcpd.leases
+    # =================================================
+    # === KASUS 3: NODE DHCP CLIENT (GILGALAD, DLL) ===
+    # =================================================
+    "Gilgalad" | "Amandil" | "Khamul")
+        echo "Node: $CURRENT_HOST (DHCP Client)"
 
-#  Durin
-service isc-dhcp-relay status
-cat /etc/default/isc-dhcp-relay
-cat /proc/sys/net/ipv4/ip_forward
+        # 1. Install client
+        apt-get update
+        apt-get install -y isc-dhcp-client
 
-#  Gilgalad
-apt-get update
-apt-get install -y isc-dhcp-client
+        # 2. Hapus konfigurasi IP lama
+        echo "Menghapus konfigurasi IP lama di eth0..."
+        ip addr flush dev eth0
+        ip route del default
+        
+        # 3. Minta IP baru
+        echo "Meminta IP baru dari DHCP server via relay..."
+        dhclient -v eth0
 
-ip addr flush dev eth0
-ip route del default
+        # 4. Verifikasi
+        echo "--- Hasil Konfigurasi $CURRENT_HOST ---"
+        echo "IP Address:"
+        ip addr show eth0
+        echo "MAC Address:"
+        ip link show eth0 | grep ether
+        
+        if [ "$CURRENT_HOST" = "Khamul" ]; then
+            echo "-> (Cek: IP harus 192.219.3.95)"
+        fi
+        ;;
 
-dhclient -v eth0
+    # =================================================
+    # === KASUS 4: HOSTNAME TIDAK DIKENALI          ===
+    # =================================================
+    *)
+        echo "Hostname '$CURRENT_HOST' tidak dikenali."
+        echo "Script ini hanya untuk: Aldarion, Durin, Gilgalad, Amandil, atau Khamul."
+        exit 1
+        ;;
+esac
 
-ip addr show eth0
-
-ip link show eth0 | grep ether
-
-ping -c 3 192.219.1.1
-
-# kalau error, maka jalankan perintah berikut
-echo "nameserver 192.168.122.1" > /etc/resolv.conf
-ip addr add 192.219.1.6/24 dev eth0
-ip route add default via 192.219.1.1
-
-#  Amandil
-apt-get update
-apt-get install -y isc-dhcp-client
-
-ip addr flush dev eth0
-ip route del default
-
-dhclient -v eth0
-
-ip addr show eth0
-
-ip link show eth0 | grep ether
-
-ping -c 3 192.219.1.1
-
-# kalau error, maka jalankan perintah berikut
-echo "nameserver 192.168.122.1" > /etc/resolv.conf
-ip addr add 192.219.1.6/24 dev eth0
-ip route add default via 192.219.1.1
-
-#  Khamul
-apt-get update
-apt-get install -y isc-dhcp-client
-
-ip addr flush dev eth0
-ip route del default
-
-dhclient -v eth0
-
-# IP harus 192.219.3.95
-ip addr show eth0
-
-# Hardware address harus 02:42:dc:08:82:00
-ip link show eth0 | grep ether
-
-# Jika error
-echo "nameserver 192.168.122.1" > /etc/resolv.conf
-ip addr add 192.219.3.95/24 dev eth0
-ip route add default via 192.219.3.1
+echo "--- Script Selesai ---"
