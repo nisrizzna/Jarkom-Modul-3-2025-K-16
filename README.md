@@ -255,3 +255,30 @@ Menginstal aplikasi web Laravel di node worker (Elendil, dll.) dan menghubungkan
     * Ini membuktikan bahwa langkah-langkah di sisi *web server* (worker) seperti `git clone`, `composer install`, dan rekonfigurasi Nginx (untuk port baru dan *root directory* `/public`) telah **sukses**.
     * Gambar ini adalah hasil yang didapat ketika mengakses salah satu worker (misal: `links http://elendil.k16.com:8001`) setelah skrip `soal_8.sh` selesai dijalankan.
 
+## Soal 9: Penambahan API Route (`/api/airing`)
+### Soal
+```
+Pastikan setiap benteng berfungsi secara mandiri. Dari dalam node client masing-masing, gunakan lynx untuk melihat halaman utama Laravel dan curl /api/airing untuk memastikan mereka bisa mengambil data dari Palantir.
+```
+* **Tujuan:**
+    Menambahkan *route* API baru (`/api/airing`) ke aplikasi Laravel di semua node worker (Elendil, Isildur, Anarion). *Route* ini akan menjalankan kueri `SHOW DATABASES` ke database (Palantir) dan mengembalikannya sebagai JSON untuk membuktikan koneksi.
+
+* **Perintah Kunci yang Dieksekusi (di Elendil, Isildur, Anarion):**
+    1.  `service nginx status || service nginx restart`: Memeriksa status Nginx.
+    2.  `service php8.4-fpm status || service php8.4-fpm restart`: Memeriksa status PHP-FPM.
+    3.  `cat << 'EOF' > /var/www/laravel/routes/api.php`: Membuat file `api.php` yang berisi logika untuk *route* `/airing`. Logika ini mencoba `DB::select('SHOW DATABASES')`.
+    4.  `sed -i "...api: __DIR__.../api.php..." ...`: Mengedit file `bootstrap/app.php` agar Laravel mendaftarkan file `api.php` yang baru dibuat.
+    5.  `php artisan route:clear`: Membersihkan *cache* *route* lama.
+    6.  `php artisan route:cache`: Membuat *cache* *route* baru agar *route* `/api/airing` dikenali.
+    7.  `service php8.4-fpm restart` dan `service nginx restart`: Me-restart layanan untuk menerapkan semua perubahan.
+
+<img width="1416" height="718" alt="image" src="https://github.com/user-attachments/assets/9f3e1e9d-faf8-48e1-aebb-5307085d18fc" />
+
+* **Hasil (Berdasarkan Bukti Gambar):**
+    **Berhasil.** Gambar (`image_50c22e.jpg`) menunjukkan seluruh proses eksekusi skrip dan verifikasinya di node **Elendil**.
+    * `nginx is running.` dan `php-fpm8.4 is running.`: Output sukses dari perintah `service status` (Langkah 1 & 2).
+    * `INFO Route cache cleared successfully.` dan `INFO Routes cached successfully.`: Output sukses dari perintah `php artisan route:clear` dan `route:cache` (Langkah 5 & 6).
+    * `Restarting PHP 8.4...` dan `Restarting nginx: nginx.`: Output sukses dari perintah *restart* layanan (Langkah 7).
+    * `Setup API route di Elendil selesai.`: Konfirmasi bahwa skrip telah selesai di node Elendil.
+    * **Verifikasi Akhir:** Perintah manual `curl Elendil.k16.com:8001/api/airing` dijalankan setelah skrip selesai.
+    * **Output Verifikasi:** `{"status":"connected","databases":[...{"Database":"laravel_db"}]}`. Ini adalah **bukti sukses** bahwa *route* `/api/airing` aktif dan berhasil terhubung ke database di Palantir.
