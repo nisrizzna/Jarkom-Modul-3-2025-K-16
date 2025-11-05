@@ -215,12 +215,43 @@ Para Ksatria Númenor (Elendil, Isildur, Anarion) mulai membangun benteng pertah
     * `Restarting PHP 8.4 ...`: Output dari `service php8.4-fpm restart` (Langkah 11).
     * `Restarting nginx: nginx.`: Output dari `service nginx restart` (Langkah 12).
 
-## Soal 8
+## Soal 8: Konfigurasi Full-Stack (Database & Laravel)
 ### Soal
 ```
 Setiap benteng Númenor harus terhubung ke sumber pengetahuan, Palantir. Konfigurasikan koneksi database di file .env masing-masing worker. Setiap benteng juga harus memiliki gerbang masuk yang unik; atur nginx agar Elendil mendengarkan di port 8001, Isildur di 8002, dan Anarion di 8003. Jangan lupa jalankan migrasi dan seeding awal dari Elendil. Buat agar akses web hanya bisa melalui domain nama, tidak bisa melalui ip.
 ```
 ### Tujuan
-### Langkah dan Eksekusi
-### Hasil berdasrkan gambar
+Menginstal aplikasi web Laravel di node worker (Elendil, dll.) dan menghubungkannya ke server database terpusat (Palantir).
+### Langkah Eksekusi & Verifikasi:
+* Perintah Kunci yang Dieksekusi (di node "Palantir"):
+    1. `apt install -y mariadb-server`: Menginstal server database MariaDB.
+    2.  `service mariadb start`: Memulai layanan database.
+    3.  `mysql -u root <<EOF ... EOF`: Menjalankan serangkaian perintah SQL untuk:
+        * `CREATE DATABASE laravel_db;`: Membuat database baru.
+        * `CREATE USER 'laravel'@'%' IDENTIFIED BY 'laravel123';`: Membuat user baru (`laravel`) yang bisa diakses dari mana saja (`%`).
+        * `GRANT ALL PRIVILEGES ON laravel_db.* TO 'laravel'@'%';`: Memberi user tersebut hak akses penuh ke database `laravel_db`.
+    4.  `sed -i 's/bind-address.../bind-address = 0.0.0.0/g' ...`: **Perintah Kritis.** Ini mengubah konfigurasi MariaDB agar mau menerima koneksi dari alamat IP lain (bukan hanya `localhost`).
+    5.  `service mariadb restart`: Menerapkan perubahan konfigurasi.
+
+* **Perintah Kunci yang Dieksekusi (di node "Elendil", "Isildur", "Anarion"):**
+    1.  `rm -rf /var/www/laravel`: **Menghapus** direktori web lama (yang berisi `phpinfo()` dari Soal 7).
+    2.  `git clone https://github.com/laravel/laravel.git laravel`: Mengunduh *source code* aplikasi Laravel dari GitHub.
+    3.  `composer install`: Menginstal semua dependensi PHP yang dibutuhkan oleh Laravel.
+    4.  `cp .env.example .env`: Membuat file konfigurasi lingkungan.
+    5.  `php artisan key:generate`: Menghasilkan kunci enkripsi unik untuk aplikasi.
+    6.  `sed -i "s/DB_HOST=127.0.0.1/DB_HOST=192.219.4.3/g" .env`: Mengubah file `.env` agar menunjuk ke IP **Palantir** (192.219.4.3) sebagai host database.
+    7.  `sed -i ...`: Mengatur nama database, username, dan password di `.env` agar sesuai dengan yang dibuat di Palantir.
+    8.  `if [ "$CURRENT_HOST" = "Elendil" ]; then PORT="8001" ...`: Logika ini menetapkan port unik untuk setiap worker (Elendil: 8001, Isildur: 8002, Anarion: 8003).
+    9.  `cat << EOF > /etc/nginx/sites-available/laravel`: **Menimpa** konfigurasi Nginx dari Soal 7. Konfigurasi baru ini:
+        * Menggunakan port baru (misal: `listen 8001;`).
+        * Mengatur `root` ke `/var/www/laravel/public;` (direktori yang benar untuk Laravel).
+    10. `service nginx restart` dan `service php8.4-fpm restart`: Menerapkan konfigurasi Nginx yang baru.
+    11. `if [ "$CURRENT_HOST" = "Elendil" ]; then ... php artisan migrate:fresh --seed`: **Hanya di Elendil**, skrip ini menjalankan migrasi database. Ini adalah perintah yang membuat *tabel-tabel* Laravel di dalam database `laravel_db` di Palantir.
+
+<img width="1486" height="772" alt="image" src="https://github.com/user-attachments/assets/d21872e1-6de8-4864-8978-819bd086931f" />
+
+* **Hasil (Berdasarkan Bukti Gambar):**
+    **Berhasil.** Gambar (`image_50b382.jpg`) menunjukkan halaman *welcome* default Laravel ("Let's get started", "Deploy now") yang ditampilkan di dalam browser terminal.
+    * Ini membuktikan bahwa langkah-langkah di sisi *web server* (worker) seperti `git clone`, `composer install`, dan rekonfigurasi Nginx (untuk port baru dan *root directory* `/public`) telah **sukses**.
+    * Gambar ini adalah hasil yang didapat ketika mengakses salah satu worker (misal: `links http://elendil.k16.com:8001`) setelah skrip `soal_8.sh` selesai dijalankan.
 
