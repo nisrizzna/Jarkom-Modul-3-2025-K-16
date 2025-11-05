@@ -5,6 +5,13 @@
 ## Akses Soal
 https://docs.google.com/document/d/132Qc6g4a7CQTVu9INjJ0nVfcZBPVs7DUYkScq-bF-sU/edit?tab=t.0
 ## Soal 1: Konfigurasi Jaringan Dasar
+### Soal:
+```
+Di awal Zaman Kedua, setelah kehancuran Beleriand, para Valar menugaskan untuk membangun kembali jaringan komunikasi antar kerajaan. Para Valar menyalakan Minastir,
+Aldarion, Erendis, Amdir, Palantir, Narvi, Elros, Pharazon, Elendil, Isildur, Anarion, Galadriel, Celeborn, Oropher, Miriel, Amandil, Gilgalad, Celebrimbor, Khamul, dan
+pastikan setiap node (selain Durin sang penghubung antar dunia) dapat sementara berkomunikasi dengan Valinor/Internet (nameserver 192.168.122.1) untuk menerima instruksi
+awal.
+```
 ### Tujuan
 Menginisialisasi konfigurasi jaringan dasar di semua node. Soal ini mengatur hostname untuk mendeteksi perannya, kemudian mengkonfigurasi file `/etc/network/interfaces` secara dinamis. Peran utamanya adalah menjadikan "Durin" sebagai Router (Gateway) dengan NAT (Network Address Translation) agar semua node internal dapat terhubung ke internet. Mengkonfigurasi `/etc/network/interfaces` di semua node berdasarkan hostname mereka.
 ### Langkah Eksekusi & Verifikasi:CURRENT_HOST=$(hostname): Skrip mendeteksi nama node saat ini.
@@ -25,6 +32,14 @@ Menginisialisasi konfigurasi jaringan dasar di semua node. Soal ini mengatur hos
    * Node Minastir berhasil melakukan ping ke google.com (Bukti: 23514.jpg).
 
 ## Soal 2: Konfigurasi Layanan DHCP
+### Soal
+```
+Raja Pelaut Aldarion, penguasa wilayah Númenor, memutuskan cara pembagian tanah client secara dinamis. Ia menetapkan:
+ * Client Dinamis Keluarga Manusia: Mendapatkan tanah di rentang [prefix ip].1.6 - [prefix ip].1.34 dan [prefix ip].1.68 - [prefix ip].1.94.
+ * Client Dinamis Keluarga Peri: Mendapatkan tanah di rentang [prefix ip].2.35 - [prefix ip].2.67 dan [prefix ip].2.96 - [prefix ip].2.121.
+ * Khamul yang misterius: Diberikan tanah tetap di [prefix ip].3.95, agar keberadaannya selalu diketahui. Pastikan Durin dapat menyampaikan dekrit ini ke semua wilayah yang
+terhubung dengannya.
+```
 ### Tujuan
    Mengkonfigurasi arsitektur DHCP terpusat. Ini melibatkan tiga peran:
    * Aldarion: Sebagai DHCP Server (isc-dhcp-server).
@@ -58,6 +73,11 @@ Hasil (Berdasarkan Bukti Gambar):
    * Client (Amandil): Proses handshake DHCP (DISCOVER, OFFER, REQUEST, ACK) terekam dengan jelas. Amandil berhasil mendapatkan IP 192.219.1.7 dari relay (192.219.1.1 - Durin) (Bukti: 23515.jpg).
    
 ## Soal 3: Konfigurasi DNS Forwarding
+### Soal
+```
+Untuk mengontrol arus informasi ke dunia luar (Valinor/Internet), sebuah menara pengawas, Minastir didirikan. Minastir mengatur agar semua node (kecuali Durin) hanya dapat
+mengirim pesan ke luar Arda setelah melewati pemeriksaan di Minastir.
+```
 ### Tujuan:
 Mengkonfigurasi node Minastir (192.219.5.2) untuk bertindak sebagai DNS Forwarder (atau Caching Server). Tujuannya adalah semua permintaan DNS dari jaringan internal ke internet (seperti google.com) akan melalui Minastir terlebih dahulu. Skrip ini juga mengubah /etc/resolv.conf di semua node klien agar menunjuk ke Minastir.
 ### Langkah Eksekusi & Verifikasi:
@@ -79,6 +99,12 @@ Mengkonfigurasi node Minastir (192.219.5.2) untuk bertindak sebagai DNS Forwarde
    * Node Minastir terbukti aktif dan memiliki koneksi internet (dari Soal 1), yang merupakan syarat mutlak untuk dapat me-forward kueri DNS ke server eksternal (Bukti: 23514.jpg).
 
 ## Soal 4: Konfigurasi DNS Master-Slave (Internal)
+### Soal
+```
+Ratu Erendis, sang pembuat peta, menetapkan nama resmi untuk wilayah utama (<xxxx>.com). Ia menunjuk dirinya (ns1.<xxxx>.com) dan muridnya Amdir (ns2.<xxxx>.com) sebagai
+penjaga peta resmi. Setiap lokasi penting (Palantir, Elros, Pharazon, Elendil, Isildur, Anarion, Galadriel, Celeborn, Oropher) diberikan nama domain unik yang menunjuk ke
+lokasi fisik tanah mereka. Pastikan Amdir selalu menyalin peta (master-slave) dari Erendis dengan setia.
+```
 ### Tujuan:
    Membangun layanan DNS internal untuk domain k16.com.
    * Erendis (192.219.3.3): Dikonfigurasi sebagai Master DNS Server.
@@ -105,6 +131,12 @@ Mengkonfigurasi node Minastir (192.219.5.2) untuk bertindak sebagai DNS Forwarde
 <img width="1177" height="751" alt="image" src="https://github.com/user-attachments/assets/419cc95a-6b13-4bca-9818-60b534aa8b6e" />
 
 ## Soal 5: Update DNS (CNAME, TXT, Reverse)
+### Soal
+```
+Untuk memudahkan, nama alias www.<xxxx>.com dibuat untuk peta utama <xxxx>.com. Reverse PTR juga dibuat agar lokasi Erendis dan Amdir dapat dilacak dari alamat fisik
+tanahnya. Erendis juga menambahkan pesan rahasia (TXT record) pada petanya: "Cincin Sauron" yang menunjuk ke lokasi Elros, dan "Aliansi Terakhir" yang menunjuk ke lokasi
+Pharazon. Pastikan Amdir juga mengetahui pesan rahasia ini.
+```
 ### Tujuan
 Memperbarui konfigurasi DNS di Erendis (Master) dari Soal 4. Pembaruan ini menambahkan record CNAME (www), TXT, dan yang paling penting, Reverse Zone (PTR) untuk subnet 192.219.3.0/24.
 ### Langkah Eksekusi & Verifikasi:
@@ -127,8 +159,15 @@ Memperbarui konfigurasi DNS di Erendis (Master) dari Soal 4. Pembaruan ini menam
    * Client (Miriel): Verifikasi reverse lookup dari klien (host 192.219.3.3 dan host 192.219.3.4) juga berhasil. Klien dapat dengan benar memetakan 192.219.3.3 ke ns1.k16.com. dan 192.219.3.4 ke ns2.k16.com. (Bukti: 23498.jpg).
 
 ## Soal 6: Update Konfigurasi DHCP Server
+### Soal
+```
+Aldarion menetapkan aturan waktu peminjaman tanah. Ia mengatur:
+ * Client Dinamis Keluarga Manusia dapat meminjam tanah selama setengah jam.
+ * Client Dinamis Keluarga Peri hanya seperenam jam.
+ * Batas waktu maksimal peminjaman untuk semua adalah satu jam.
+```
 ### Tujuan:
-   Menimpa (overwrite) file konfigurasi DHCP Server di Aldarion (/etc/dhcp/dhcpd.conf) dengan pengaturan baru dari skrip soal_6.sh. Perubahan utama mencakup max-lease-time, option domain-name-servers baru, dan reservasi IP untuk Khamul.
+Menimpa (overwrite) file konfigurasi DHCP Server di Aldarion (/etc/dhcp/dhcpd.conf) dengan pengaturan baru dari skrip soal_6.sh. Perubahan utama mencakup max-lease-time, option domain-name-servers baru, dan reservasi IP untuk Khamul.
 ### Langkah Eksekusi & Verifikasi:
 * Di Aldarion:
   * cat << 'EOF' > /etc/dhcp/dhcpd.conf: Perintah ini menimpa (bukan menambahkan) seluruh konfigurasi dhcpd.conf dengan konten baru dari skrip soal_6.sh.
@@ -143,7 +182,11 @@ Memperbarui konfigurasi DNS di Erendis (Master) dari Soal 4. Pembaruan ini menam
    * Di bagian bawah gambar, terlihat log service isc-dhcp-server restart (Stopping ISC DHCPv4 server... dan Starting ISC DHCPv4 server...), yang mengkonfirmasi bahwa skrip telah dieksekusi dan layanan di-restart untuk menerapkan perubahan.
 
 ## Soal 7: Konfigurasi Web Server (Dasar)
-
+### Soal
+```
+Para Ksatria Númenor (Elendil, Isildur, Anarion) mulai membangun benteng pertahanan digital mereka menggunakan teknologi Laravel. Instal semua tools yang dibutuhkan
+(php8.4, composer, nginx) dan dapatkan cetak biru benteng dari Resource-laravel di setiap node worker Laravel. Cek dengan lynx di client.
+```
 ### Tujuan
    Menginstal Nginx, PHP 8.4, dan Composer di node worker. Skrip ini kemudian membuat halaman `phpinfo()` sederhana untuk pengujian.
 
@@ -171,4 +214,13 @@ Memperbarui konfigurasi DNS di Erendis (Master) dari Soal 4. Pembaruan ini menam
     * `Starting nginx: nginx.`: Output dari `service nginx start` (Langkah 10).
     * `Restarting PHP 8.4 ...`: Output dari `service php8.4-fpm restart` (Langkah 11).
     * `Restarting nginx: nginx.`: Output dari `service nginx restart` (Langkah 12).
+
+## Soal 8
+### Soal
+```
+Setiap benteng Númenor harus terhubung ke sumber pengetahuan, Palantir. Konfigurasikan koneksi database di file .env masing-masing worker. Setiap benteng juga harus memiliki gerbang masuk yang unik; atur nginx agar Elendil mendengarkan di port 8001, Isildur di 8002, dan Anarion di 8003. Jangan lupa jalankan migrasi dan seeding awal dari Elendil. Buat agar akses web hanya bisa melalui domain nama, tidak bisa melalui ip.
+```
+### Tujuan
+### Langkah dan Eksekusi
+### Hasil berdasrkan gambar
 
