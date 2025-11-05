@@ -1,14 +1,23 @@
 # Jarkom-Modul-3-2025-K-16
-
+## MEMBER
+1. Muhammad Ardiansyah Tri Wibowo - 5027241091
+2. Nisrina Bilqis - 5027241054
+## Akses Soal
+https://docs.google.com/document/d/132Qc6g4a7CQTVu9INjJ0nVfcZBPVs7DUYkScq-bF-sU/edit?tab=t.0
 ## Soal 1: Konfigurasi Jaringan Dasar
 ### Tujuan
-Menginisialisasi konfigurasi jaringan dasar di semua node. Skrip ini mengatur hostname untuk mendeteksi perannya, kemudian mengkonfigurasi file /etc/network/interfaces secara dinamis. Peran utamanya adalah menjadikan "Durin" sebagai Router (Gateway) dengan NAT (Network Address Translation) agar semua node internal dapat terhubung ke internet.
-### Langkah Eksekusi & Verifikasi:
-   * Skrip soal_1.sh dieksekusi di semua node.
-   * Di Durin, skrip mengaktifkan ip_forward dan iptables MASQUERADE.
-   * Di node lain (misal: Elendil, Aldarion, Amandil, Minastir), skrip mengatur IP (statis atau DHCP) dan menempatkan Durin sebagai gateway.
-   * Langkah verifikasi akhir dalam skrip adalah menjalankan ping google.com untuk memastikan konektivitas internet melalui NAT di Durin.
- * Hasil (Berdasarkan Bukti Gambar):
+Menginisialisasi konfigurasi jaringan dasar di semua node. Soal ini mengatur hostname untuk mendeteksi perannya, kemudian mengkonfigurasi file `/etc/network/interfaces` secara dinamis. Peran utamanya adalah menjadikan "Durin" sebagai Router (Gateway) dengan NAT (Network Address Translation) agar semua node internal dapat terhubung ke internet. Mengkonfigurasi `/etc/network/interfaces` di semua node berdasarkan hostname mereka.
+### Langkah Eksekusi & Verifikasi:CURRENT_HOST=$(hostname): Skrip mendeteksi nama node saat ini.
+1. case $CURRENT_HOST in ... "Durin") ...: Skrip masuk ke logika khusus untuk "Durin".
+2. sysctl -w net.ipv4.ip_forward=1: Mengaktifkan penerusan IP di Durin.
+3. iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE -s 192.219.0.0/16: Menjadikan Durin sebagai router NAT.
+4. cat << EOF >> $CONFIG_FILE: Menulis konfigurasi IP statis untuk node lain (misal: Elendil, Aldarion, Amandil, Minastir).
+5. service networking restart: Menerapkan semua perubahan IP.
+6. ping -c 3 google.com: Menjalankan tes konektivitas internet di akhir skrip.
+
+<img width="1401" height="726" alt="image" src="https://github.com/user-attachments/assets/705a03a8-8523-43c2-b14e-cc5bcebc04f8" />
+
+ * Contoh hasil pada gambar:
    Berhasil. Konektivitas internet terkonfirmasi.
    * Node Elendil berhasil melakukan ping ke google.com (Bukti: 23512.jpg - panel kanan).
    * Node Aldarion berhasil melakukan ping ke google.com (Bukti: 23513.jpg - panel kiri).
@@ -22,10 +31,27 @@ Menginisialisasi konfigurasi jaringan dasar di semua node. Skrip ini mengatur ho
    * Durin: Sebagai DHCP Relay (isc-dhcp-relay) untuk meneruskan permintaan DHCP dari subnet lain ke Aldarion.
    * Amandil, Gilgalad, Khamul: Sebagai DHCP Client.
 ### Langkah Eksekusi & Verifikasi:
-   * DHCP Server (Aldarion): Skrip soal_2.sh diinstal dan dijalankan di Aldarion.
-   * DHCP Relay (Durin): Skrip soal_2.sh diinstal dan dijalankan di Durin.
-   * DHCP Client (Amandil): Skrip soal_2.sh dijalankan di Amandil untuk meminta IP.
- * Hasil (Berdasarkan Bukti Gambar):
+1. Di Aldarion (Server):
+   * apt-get install -y isc-dhcp-server: Menginstal server.
+   * echo 'INTERFACESv4="eth0"' > /etc/default/isc-dhcp-server: Mengatur server agar hanya "mendengar" di eth0.
+   * cat << 'EOF' > /etc/dhcp/dhcpd.conf: Menulis file konfigurasi subnet dan range IP.
+   * service isc-dhcp-server restart: Menerapkan konfigurasi.
+
+2. Di Durin (Relay):
+   * apt-get install -y isc-dhcp-relay: Menginstal relay.
+   * echo 'SERVERS="192.219.4.2"' > /etc/default/isc-dhcp-relay: Memberi tahu relay di mana alamat Server DHCP (Aldarion).
+   * echo 'INTERFACES="eth1 eth2 eth3 eth4"' >> ...: Memberi tahu relay untuk meneruskan permintaan dari antarmuka ini.
+   * service isc-dhcp-relay restart: Menerapkan konfigurasi.
+
+3. Di Amandil (Client):
+   * ip addr flush dev eth0: Menghapus IP lama.
+   * dhclient -v eth0: Meminta IP baru secara aktif.
+
+<img width="1402" height="732" alt="image" src="https://github.com/user-attachments/assets/17244ebf-d744-45e7-8c1f-e9b9930369e9" />
+
+<img width="1123" height="579" alt="image" src="https://github.com/user-attachments/assets/f5414022-e81b-413c-bc04-39f5098b724b" />
+
+Hasil (Berdasarkan Bukti Gambar):
    Berhasil. Ketiga komponen berfungsi.
    * Server (Aldarion): Layanan isc-dhcp-server berhasil di-restart dan verifikasi status menunjukkan layanan aktif (Bukti: 23513.jpg - panel kiri, "Me-restart isc-dhcp-server... Setup Aldarion Selesai").
    * Relay (Durin): Instalasi dan konfigurasi isc-dhcp-relay berhasil, termasuk aktivasi IP Forwarding (Bukti: 23512.jpg - panel kiri).
@@ -35,12 +61,22 @@ Menginisialisasi konfigurasi jaringan dasar di semua node. Skrip ini mengatur ho
 ### Tujuan:
 Mengkonfigurasi node Minastir (192.219.5.2) untuk bertindak sebagai DNS Forwarder (atau Caching Server). Tujuannya adalah semua permintaan DNS dari jaringan internal ke internet (seperti google.com) akan melalui Minastir terlebih dahulu. Skrip ini juga mengubah /etc/resolv.conf di semua node klien agar menunjuk ke Minastir.
 ### Langkah Eksekusi & Verifikasi:
-   * Skrip soal_3.sh dieksekusi di Minastir, menginstal BIND9 dan mengkonfigurasinya sebagai forwarder.
-   * Skrip soal_3.sh dieksekusi di node klien, mengubah nameserver mereka.
+1. Di Minastir:
+   * apt-get install -y bind9 ...: Menginstal BIND9.
+   * cat > /etc/bind/named.conf.options << EOF: Menulis file konfigurasi baru.
+   * Perintah di dalam cat: forwarders { 8.8.8.8; 8.8.4.4; 1.1.1.1; }; dan forward only; mengubah Minastir menjadi forwarder murni.
+   * service named restart: Menerapkan konfigurasi.
+
+2. Di Semua Klien (kecuali Durin/Minastir):
+   * cat > /etc/resolv.conf << EOF: Menimpa resolver klien.
+   * Perintah di dalam cat: nameserver 192.219.5.2 (alamat IP Minastir).
+<img width="758" height="766" alt="image" src="https://github.com/user-attachments/assets/1aafb03b-eb45-4202-88a9-094dab5f19bf" />
+
+<img width="1067" height="716" alt="image" src="https://github.com/user-attachments/assets/8c3142ba-11ab-49db-bbf4-d01325dfee99" />
+
  * Hasil (Berdasarkan Bukti Gambar):
    Terkonfigurasi. Bukti gambar menunjukkan prasyarat (konektivitas internet Minastir) terpenuhi.
    * Node Minastir terbukti aktif dan memiliki koneksi internet (dari Soal 1), yang merupakan syarat mutlak untuk dapat me-forward kueri DNS ke server eksternal (Bukti: 23514.jpg).
-   * (Tidak ada gambar yang secara spesifik menunjukkan hasil nslookup melalui Minastir, namun konfigurasinya telah dijalankan).
 
 ## Soal 4: Konfigurasi DNS Master-Slave (Internal)
 ### Tujuan:
@@ -49,19 +85,42 @@ Mengkonfigurasi node Minastir (192.219.5.2) untuk bertindak sebagai DNS Forwarde
    * Amdir (192.219.3.4): Dikonfigurasi sebagai Slave DNS Server.
    * Client (Miriel): Dikonfigurasi untuk menggunakan Erendis sebagai resolver.
 ### Langkah Eksekusi & Verifikasi:
-   Skrip soal_4.sh dieksekusi di Erendis, Amdir, dan Miriel (atau klien lain).
- * Hasil (Berdasarkan Bukti Gambar):
-   Sebagian Gagal. Konfigurasi Master berhasil secara lokal, namun Slave dan resolusi dari Klien gagal.
-   * Master (Erendis): Berhasil. Verifikasi lokal (dig @localhost palantir.k16.com) mengembalikan jawaban yang benar (192.219.4.3) dengan status NOERROR (Bukti: 23490.jpg).
-   * Slave (Amdir): Gagal. Verifikasi lokal (dig @localhost palantir.k16.com) gagal dengan status SERVFAIL (Bukti: 23492.jpg). Ini mengindikasikan Amdir gagal melakukan zone transfer (menyalin data) dari Erendis.
-   * Client (Miriel): Gagal. Saat Miriel (menggunakan Erendis 192.219.3.3 sebagai server) mencoba me-resolve palantir.k16.com dan galadriel.k16.com, ia menerima status NXDOMAIN (Non-Existent Domain) (Bukti: 23494.jpg). Ini menunjukkan Erendis tidak merespons kueri dari klien eksternal, meskipun allow-query { any; } ada di skrip.
+1. Di Erendis (Master):
+   * cat > /etc/bind/named.conf.local: Mendefinisikan zona k16.com sebagai type master.
+   * cat > /etc/bind/jarkom/k16.com: Menulis semua A Records (misal: palantir IN A 192.219.4.3, galadriel IN A 192.219.2.5, dll).
+   * service named restart: Memulai layanan DNS.
+
+2. Di Amdir (Slave):
+   * cat > /etc/bind/named.conf.local: Mendefinisikan zona k16.com sebagai type slave dengan masters { 192.219.3.3; };.
+   * service named restart: Memulai layanan dan memicu zone transfer.
+
+3. Di Klien (Miriel):
+   * echo "nameserver 192.219.3.3" > /etc/resolv.conf: Mengarahkan klien ke Erendis.
+   * nslookup palantir.k16.com: Menjalankan tes resolusi.
+  
+<img width="1168" height="733" alt="image" src="https://github.com/user-attachments/assets/e0657c44-c914-413f-9871-b9e2520421f0" />
+
+<img width="1176" height="715" alt="image" src="https://github.com/user-attachments/assets/402f69be-10a7-4b36-bc30-6e8b93777774" />
+
+<img width="1177" height="751" alt="image" src="https://github.com/user-attachments/assets/419cc95a-6b13-4bca-9818-60b534aa8b6e" />
+
 ## Soal 5: Update DNS (CNAME, TXT, Reverse)
 ### Tujuan
-   Memperbarui konfigurasi DNS di Erendis (Master) dari Soal 4. Pembaruan ini menambahkan record CNAME (www), TXT, dan yang paling penting, Reverse Zone (PTR) untuk subnet 192.219.3.0/24.
+Memperbarui konfigurasi DNS di Erendis (Master) dari Soal 4. Pembaruan ini menambahkan record CNAME (www), TXT, dan yang paling penting, Reverse Zone (PTR) untuk subnet 192.219.3.0/24.
 ### Langkah Eksekusi & Verifikasi:
-   * Skrip soal_5.sh dieksekusi di Erendis untuk memperbarui file zona.
-   * Skrip soal_5.sh dieksekusi di Amdir untuk menambahkan konfigurasi reverse zone sebagai slave.
-   * Verifikasi dilakukan dari Erendis (lokal) dan Miriel (klien).
+1. Di Erendis (Master):
+   * cat > /etc/bind/named.conf.local: Menambahkan definisi zone "3.219.192.in-addr.arpa" (Ini salah ketik di skripmu, harusnya 3.219.192.in-addr.arpa atau 3.76.10.in
+   * addr.arpa seperti di file soal_5.sh). Catatan: Berdasarkan skrip soal_5.sh yang kamu berikan, nama zona yang benar adalah 3.76.10.in-addr.arpa.
+   * cat > /etc/bind/jarkom/3.76.10.in-addr.arpa: Menulis PTR Records (misal: 3 IN PTR ns1.k16.com.).
+   * service named restart: Menerapkan zona baru.
+
+2. Di Klien (Miriel):
+   * host 192.219.3.3: Menjalankan tes reverse lookup.
+
+<img width="1307" height="787" alt="image" src="https://github.com/user-attachments/assets/b42bd92b-033a-4781-b86d-53192896d6b4" />
+
+<img width="1676" height="519" alt="image" src="https://github.com/user-attachments/assets/3a5a6bc5-acdc-4e05-b9ef-4c00b237e21b" />
+
  * Hasil (Berdasarkan Bukti Gambar):
    Berhasil (untuk Reverse Zone).
    * Master (Erendis): Verifikasi reverse lookup lokal (dig -x 192.219.3.3 @localhost) berhasil dengan status NOERROR, memetakan IP kembali ke nama ns1.k16.com. (Bukti: 23496.jpg).
@@ -71,7 +130,12 @@ Mengkonfigurasi node Minastir (192.219.5.2) untuk bertindak sebagai DNS Forwarde
 ### Tujuan:
    Menimpa (overwrite) file konfigurasi DHCP Server di Aldarion (/etc/dhcp/dhcpd.conf) dengan pengaturan baru dari skrip soal_6.sh. Perubahan utama mencakup max-lease-time, option domain-name-servers baru, dan reservasi IP untuk Khamul.
 ### Langkah Eksekusi & Verifikasi:
-   Skrip soal_6.sh dieksekusi di Aldarion.
+* Di Aldarion:
+  * cat << 'EOF' > /etc/dhcp/dhcpd.conf: Perintah ini menimpa (bukan menambahkan) seluruh konfigurasi dhcpd.conf dengan konten baru dari skrip soal_6.sh.
+  * service isc-dhcp-server restart: Menerapkan file konfigurasi yang baru saja ditulis.
+
+<img width="698" height="786" alt="image" src="https://github.com/user-attachments/assets/0ae5ff86-5597-4364-a4fa-2c4b7b385ffa" />
+  
  * Hasil (Berdasarkan Bukti Gambar):
    Berhasil.
    * Bukti gambar (23500.jpg) adalah tangkapan layar yang menunjukkan isi file konfigurasi baru dan eksekusi skrip secara bersamaan.
