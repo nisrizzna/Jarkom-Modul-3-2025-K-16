@@ -80,7 +80,7 @@ EOF
             PORT="8003"
         fi
         
-        SERVER_NAME="$CURRENT_HOST.k32.com"
+        SERVER_NAME="$CURRENT_HOST.k16.com"
 
         # Menulis file konfigurasi Nginx
         # Menggunakan EOF (tanpa kutip) agar $PORT dan $SERVER_NAME bisa masuk

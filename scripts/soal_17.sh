@@ -33,7 +33,7 @@ case $CURRENT_HOST in
         
         # -H "..." = Menambahkan header Authorization Basic
         # $(echo -n ... | base64) = Membuat header auth secara dinamis
-        ab -n 100 -c 10 -H "Authorization: Basic $(echo -n 'noldor:silvan' | base64)" http://pharazon.k32.com/
+        ab -n 100 -c 10 -H "Authorization: Basic $(echo -n 'noldor:silvan' | base64)" http://pharazon.k16.com/
         
         echo ""
         echo "--- Tes di Gilgalad Selesai ---"

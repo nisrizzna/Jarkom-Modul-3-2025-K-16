@@ -31,15 +31,15 @@ case $CURRENT_HOST in
         # 3. Menjalankan Tes
         echo ""
         echo "--- Tes Konektivitas Dasar (curl) ---"
-        curl -I http://elros.k32.com/api/airing
+        curl -I http://elros.k16.com/api/airing
         echo ""
 
         echo "--- Low Load Test (100 Requests, 10 Concurrent) ---"
-        ab -n 100 -c 10 http://elros.k32.com/api/airing/
+        ab -n 100 -c 10 http://elros.k16.com/api/airing/
         echo ""
 
         echo "--- Stress Test (2000 Requests, 100 Concurrent) ---"
-        ab -n 2000 -c 100 http://elros.k32.com/api/airing/
+        ab -n 2000 -c 100 http://elros.k16.com/api/airing/
         echo ""
 
         echo "--- Tes di $CURRENT_HOST Selesai ---"
@@ -67,7 +67,7 @@ upstream kesatria_numenor {
 
 server {
     listen 80;
-    server_name elros.k32.com;
+    server_name elros.k16.com;
 
     location / {
         proxy_pass http://kesatria_numenor;

@@ -84,12 +84,12 @@ case $CURRENT_HOST in
         echo "--- Mengetes PHARAZON (500 req, 50 concurrent) ---"
         # Tes ini seharusnya memicu rate limit di Pharazon
         # -H '...' = Menambahkan header otorisasi
-        ab -n 500 -c 50 -H 'Authorization: Basic bm9sZG9yOnNpbHZhbg==' http://pharazon.k32.com/
+        ab -n 500 -c 50 -H 'Authorization: Basic bm9sZG9yOnNpbHZhbg==' http://pharazon.k16.com/
         
         echo ""
         echo "--- Mengetes ELROS (500 req, 50 concurrent) ---"
         # Tes ini seharusnya memicu rate limit di Elros
-        ab -n 500 -c 50 http://elros.k32.com/
+        ab -n 500 -c 50 http://elros.k16.com/
         echo ""
 
         echo "--- Stress test selesai. ---"

@@ -35,7 +35,7 @@ cat << EOF > /etc/nginx/sites-available/php-worker
 server {
     listen 80;
     # Server_name diisi otomatis berdasarkan hostname server
-    server_name $CURRENT_HOST.k32.com;
+    server_name $CURRENT_HOST.k16.com;
 
     root /var/www/html;
     index index.php index.html index.htm;

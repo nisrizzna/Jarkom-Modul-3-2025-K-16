@@ -28,9 +28,9 @@ htpasswd -cb $PASS_FILE $USER $PASS
 echo "Menambahkan konfigurasi Basic Auth ke $CONFIG_FILE..."
 
 # Menggunakan 'sed' untuk menyisipkan 2 baris
-# tepat setelah baris yang mengandung 'server_name .*k32.com;'
+# tepat setelah baris yang mengandung 'server_name .*k16.com;'
 # '\n' digunakan untuk memisahkan dua baris yang ditambahkan.
-sed -i "/server_name .*k32.com;/a \    auth_basic \"Akses Terbatas: Gerbang Taman Peri\";\n    auth_basic_user_file \/etc\/nginx\/.htpasswd;" "$CONFIG_FILE"
+sed -i "/server_name .*k16.com;/a \    auth_basic \"Akses Terbatas: Gerbang Taman Peri\";\n    auth_basic_user_file \/etc\/nginx\/.htpasswd;" "$CONFIG_FILE"
 
 # --- 4. Aktivasi & Restart ---
 echo "Mengecek sintaks Nginx..."

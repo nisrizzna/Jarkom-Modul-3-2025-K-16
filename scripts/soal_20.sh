@@ -73,7 +73,7 @@ case $CURRENT_HOST in
     "Gilgalad" | "Amandil")
         echo "--- Menjalankan Tes Verifikasi Cache dari $CURRENT_HOST ---"
         
-        URL="http://pharazon.k32.com/"
+        URL="http://pharazon.k16.com/"
 
         echo "--- Tes 1: Cek X-Cache-Status (Harusnya MISS) ---"
         # -I = Hanya ambil headers

@@ -32,7 +32,7 @@ upstream Kesatria_Lorien {
 # 2. SERVER BLOCK (Reverse Proxy)
 server {
     listen 80;
-    server_name pharazon.k32.com;
+    server_name pharazon.k16.com;
 
     location / {
         # Meneruskan permintaan ke kelompok worker

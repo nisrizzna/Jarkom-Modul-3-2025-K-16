@@ -24,7 +24,7 @@ upstream kesatria_numenor {
 
 server {
     listen 80;
-    server_name elros.k32.com;
+    server_name elros.k16.com;
 
     # Semua request (location /) akan diteruskan
     location / {
