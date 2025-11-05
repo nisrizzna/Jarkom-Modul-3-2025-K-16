@@ -141,3 +141,34 @@ Memperbarui konfigurasi DNS di Erendis (Master) dari Soal 4. Pembaruan ini menam
    * Bukti gambar (23500.jpg) adalah tangkapan layar yang menunjukkan isi file konfigurasi baru dan eksekusi skrip secara bersamaan.
    * Terlihat jelas max-lease-time 3600, subnet 192.219.1.0 (Manusia), subnet 192.219.2.0 (Peri), dan subnet 192.219.3.0 (Kurcaci) dengan opsi yang sesuai dari skrip.
    * Di bagian bawah gambar, terlihat log service isc-dhcp-server restart (Stopping ISC DHCPv4 server... dan Starting ISC DHCPv4 server...), yang mengkonfirmasi bahwa skrip telah dieksekusi dan layanan di-restart untuk menerapkan perubahan.
+
+## Soal 7: Konfigurasi Web Server (Dasar)
+
+### Tujuan
+   Menginstal Nginx, PHP 8.4, dan Composer di node worker. Skrip ini kemudian membuat halaman `phpinfo()` sederhana untuk pengujian.
+
+### Langkah Eksekusi & Verifikasi:
+ 1.  `apt update -y`: Memperbarui daftar paket.
+ 2.  `apt install -y nginx php8.4 php8.4-fpm ... composer`: Menginstal semua perangkat lunak yang diperlukan (Nginx, PHP, dan Composer).
+ 3.  `mkdir -p /var/www/laravel`: Membuat direktori web.
+ 4.  `echo "<?php phpinfo(); ?>" > index.php`: Membuat file `index.php` pengujian yang hanya berisi `phpinfo()`.
+ 5.  `rm -f /etc/nginx/sites-enabled/default`: Menghapus konfigurasi default Nginx
+ 6.   cat << 'EOF' > /etc/nginx/sites-available/laravel`: Membuat file konfigurasi Nginx baru untuk menayangkan konten dari `/var/www/laravel` di port 80 dan meneruskan file `.php` ke PHP-FPM.
+ 7.   ginx -t`: Menguji sintaks file konfigurasi Nginx.
+ 8.   `ln -sf /etc/nginx/sites-available/laravel ...`: Mengaktifkan konfigurasi baru.
+ 9.   `service php8.4-fpm start`
+ 10.   `service nginx start`
+ 11.   `service php8.4-fpm restart`
+ 12.   `service nginx restart`: Memulai dan me-restart layanan untuk menerapkan semua perubahan.
+
+<img width="1046" height="599" alt="image" src="https://github.com/user-attachments/assets/0e3d0a36-a4a9-44ee-aa21-33a9bc609ef6" />
+
+* Hasil (Berdasarkan Bukti Gambar):
+    **Berhasil.** Gambar (`image_503a4d.jpg`) dengan jelas menunjukkan **output akhir** dari eksekusi skrip ini.
+    * `Setting up php8.4 (...)`, `Setting up composer (...)`: Ini adalah log dari perintah `apt install` (Langkah 2) yang berhasil menyelesaikan instalasi.
+    * `nginx: the configuration file ... syntax is ok`: Ini adalah output sukses dari perintah `nginx -t` (Langkah 7).
+    * `nginx: configuration file ... test is successful`: Ini juga konfirmasi dari `nginx -t` (Langkah 7).
+    * `Starting nginx: nginx.`: Output dari `service nginx start` (Langkah 10).
+    * `Restarting PHP 8.4 ...`: Output dari `service php8.4-fpm restart` (Langkah 11).
+    * `Restarting nginx: nginx.`: Output dari `service nginx restart` (Langkah 12).
+
