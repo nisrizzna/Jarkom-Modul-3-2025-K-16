@@ -282,3 +282,37 @@ Pastikan setiap benteng berfungsi secara mandiri. Dari dalam node client masing-
     * `Setup API route di Elendil selesai.`: Konfirmasi bahwa skrip telah selesai di node Elendil.
     * **Verifikasi Akhir:** Perintah manual `curl Elendil.k16.com:8001/api/airing` dijalankan setelah skrip selesai.
     * **Output Verifikasi:** `{"status":"connected","databases":[...{"Database":"laravel_db"}]}`. Ini adalah **bukti sukses** bahwa *route* `/api/airing` aktif dan berhasil terhubung ke database di Palantir.
+
+---
+
+## Soal 10: Konfigurasi Reverse Proxy (Elros)
+### Soal
+```
+Pemimpin bijak Elros ditugaskan untuk mengkoordinasikan pertahanan Númenor. Konfigurasikan nginx di Elros untuk bertindak sebagai reverse proxy. Buat upstream bernama kesatria_numenor yang berisi alamat ketiga worker (Elendil, Isildur, Anarion). Atur agar semua permintaan yang datang ke domain elros.<xxxx>.com diteruskan secara merata menggunakan algoritma Round Robin ke backend.
+```
+* **Tujuan:**
+    Menginstal Nginx di **Elros** dan mengkonfigurasinya untuk bertindak sebagai *reverse proxy*. Elros akan mendengarkan di port 80 (HTTP standar) dan meneruskan (meneruskan) semua permintaan secara merata ke tiga server worker Laravel (Elendil:8001, Isildur:8002, Anarion:8003).
+
+* **Perintah Kunci yang Dieksekusi (hanya di "Elros"):**
+    1.  `apt install -y nginx`: Menginstal Nginx di Elros.
+    2.  `cat << 'EOF' > /etc/nginx/sites-available/reverse-proxy`: Membuat file konfigurasi *reverse proxy*.
+    3.  **Di dalam file konfigurasi:**
+        * `upstream kesatria_numenor { ... }`: Mendefinisikan grup server *backend* (worker).
+        * `server 192.219.1.2:8001;`: Menambahkan Elendil (dari Soal 8) ke grup.
+        * `server 192.219.1.3:8002;`: Menambahkan Isildur (dari Soal 8) ke grup.
+        * `server 192.219.1.4:8003;`: Menambahkan Anarion (dari Soal 8) ke grup.
+    4.  **Di dalam blok `server`:**
+        * `listen 80;`: Memberi tahu Elros untuk mendengarkan di port 80.
+        * `server_name elros.k16.com;`: Memberi tahu Elros untuk merespons domain ini.
+        * `proxy_pass http://kesatria_numenor;`: **Perintah Kunci.** Ini memberi tahu Nginx untuk meneruskan semua permintaan ke grup `kesatria_numenor` yang didefinisikan di atas.
+    5.  `ln -sf /etc/nginx/sites-available/reverse-proxy ...`: Mengaktifkan file konfigurasi *reverse proxy*.
+    6.  `nginx -t`: Menguji sintaks konfigurasi.
+    7.  `service nginx restart`: Menerapkan konfigurasi *reverse proxy*.
+
+<img width="737" height="778" alt="image" src="https://github.com/user-attachments/assets/a4b0eb33-facb-455c-b349-488dc4d224ea" />
+
+* **Hasil (Berdasarkan Bukti Gambar):**
+    **Berhasil.** Gambar (`image_511ba6.png`) **bukan** log eksekusi skrip, melainkan **hasil akhir** dari pengujian.
+    * Ini adalah tangkapan layar dari browser terminal (seperti `links`) yang mengakses `http://elros.k16.com` (domain yang baru saja dikonfigurasi di Elros).
+    * Elros menerima permintaan ini, meneruskannya ke salah satu server *backend* (misalnya Elendil), yang kemudian merespons dengan halaman *welcome* Laravel (yang diinstal di Soal 8).
+    * Melihat halaman Laravel ini saat mengakses Elros membuktikan bahwa *reverse proxy* (load balancer) berfungsi dengan sempurna.
